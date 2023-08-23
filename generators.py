@@ -1,6 +1,27 @@
 import numpy as np 
+import tensorflow as tf
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+import tensorflow as tf
+import tensorflow_datasets as tfds
+from tensorflow import keras
+from keras import layers
+import io
+import imageio
+
+import models
+import utils 
+
+
+addon = np.load("/home/faster/Documents/WF-Unet_comparison/Wf_geopot_landSeaMask.npy")
+tmp = np.zeros((2, 2 , 96 ,96))
+for i in range(2):
+    tmp[i] = np.copy(addon)
+addon = tmp 
+addon = addon.transpose((0,2,3,1))
+
  
-import utils
 # generator that randomly samples data  
 class DataGenerator(keras.utils.Sequence):
     def __init__(self, data, batch_size=24, min_rainfall = 0.0, time =None, wind = None) :
@@ -35,7 +56,7 @@ class DataGenerator(keras.utils.Sequence):
                 if ((np.sum(items[:,:,:,-3] != 0) / (173*105)) < self.min_rainfall):
                     pass
                 else:
-                    result[i,:,:,2] = (date_to_sinusoidal_embedding(self.time[random]) + 1) / 2
+                    result[i,:,:,2] = (utils.date_to_sinusoidal_embedding(self.time[random]) + 1) / 2
                     result[i,:,:,3:5] = np.transpose(self.wind[random+6:random+8],(1, 2, 0))
                     result[i,:,:,5:] = items[:,:96,:96,:]
                     break
@@ -75,7 +96,7 @@ class FullDataGenerator(keras.utils.Sequence):
                 if ((np.sum(items[:,:,:,-3] != 0) / (173*105)) < self.min_rainfall):
                     self.counter = self.counter + 1
                 else:
-                    result[i,:,:,2] = (date_to_sinusoidal_embedding(self.time[self.counter]) + 1)/2
+                    result[i,:,:,2] = (utils.date_to_sinusoidal_embedding(self.time[self.counter]) + 1)/2
                     result[i,:,:,3:5] = np.transpose(self.wind[self.counter+6:self.counter+8],(1, 2, 0))
                     result[i,:,:,5:] = items[:,:96,:96,:]
                     self.counter = self.counter + 1

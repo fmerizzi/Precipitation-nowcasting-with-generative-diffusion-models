@@ -1,4 +1,5 @@
 from datetime import datetime
+import numpy as np
 
 #compute a sinusoidal embedding given a date 
 def date_to_sinusoidal_embedding(date_string):

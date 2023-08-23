@@ -52,7 +52,7 @@ test_wind_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction
 test_wind_dataset = test_wind_dataset[:,:96,:96]
 
 train_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2016-2020.npy',allow_pickle = True)
-test_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/ timestamps2016-2020.npy',allow_pickle = True)
+test_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2016-2020.npy',allow_pickle = True)
 
 # normalization 
 
@@ -67,15 +67,15 @@ test_wind_dataset = test_wind_dataset / maxWtest
 
 # generator definition 
 
-train_generator50 = DataGenerator(train_dataset,batch_size,0.5,train_timestamps_dataset,train_wind_dataset)
-test_generator50 = DataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
-test_generator20 = DataGenerator(test_dataset,batch_size,0.2,test_timestamps_dataset,test_wind_dataset)
-full_test_generator50 = FullDataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
+train_generator50 = generators.DataGenerator(train_dataset,batch_size,0.5,train_timestamps_dataset,train_wind_dataset)
+test_generator50 = generators.DataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
+test_generator20 = generators.DataGenerator(test_dataset,batch_size,0.2,test_timestamps_dataset,test_wind_dataset)
+full_test_generator50 = generators.FullDataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
 
 
 # diffusion model 
 
-model = DiffusionModel(image_size, 13, 3, widths, block_depth)
+model = models.DiffusionModel(image_size, 13, 3, widths, block_depth)
 
 optimizer=keras.optimizers.experimental.AdamW
 model.compile(
@@ -88,14 +88,14 @@ model.compile(
 
 
 # pre-calculated normalizer on the whole training set 
-normer = np.load("normer.npy")
-model.normalizer.adapt(normer)
-del normer
+#normer = np.load("normer.npy")
+model.normalizer.adapt(train_generator50.__getitem__(1))
+#del normer
 
 
 # Load weights
-model.network.load_weights("weights/30diffusion_addons_ema")
-model.ema_network.load_weights("weights/30diffusion_addons_ema")
+#model.network.load_weights("weights/30diffusion_addons_ema")
+#model.ema_network.load_weights("weights/30diffusion_addons_ema")
 
 
 # Single Diffusion 

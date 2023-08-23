@@ -52,7 +52,7 @@ test_wind_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction
 test_wind_dataset = test_wind_dataset[:,:96,:96]
 
 train_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2016-2020.npy',allow_pickle = True)
-test_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/ timestamps2016-2020.npy',allow_pickle = True)
+test_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2016-2020.npy',allow_pickle = True)
 
 # normalization 
 
@@ -68,15 +68,15 @@ test_wind_dataset = test_wind_dataset / maxWtest
 
 # generator definition 
 
-train_generator50 = DataGenerator(train_dataset,batch_size,0.5,train_timestamps_dataset,train_wind_dataset)
-test_generator50 = DataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
-test_generator20 = DataGenerator(test_dataset,batch_size,0.2,test_timestamps_dataset,test_wind_dataset)
-full_test_generator50 = FullDataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
+train_generator50 = generators.DataGenerator(train_dataset,batch_size,0.5,train_timestamps_dataset,train_wind_dataset)
+test_generator50 = generators.DataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
+test_generator20 = generators.DataGenerator(test_dataset,batch_size,0.2,test_timestamps_dataset,test_wind_dataset)
+full_test_generator50 = generators.FullDataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
 
 
 # diffusion model 
 
-model = DiffusionModel(image_size, 13, 3, widths, block_depth)
+model = models.DiffusionModel(image_size, 13, 3, widths, block_depth)
 
 optimizer=keras.optimizers.experimental.AdamW
 model.compile(
@@ -88,15 +88,17 @@ model.compile(
 # pixelwise mean absolute error is used as loss
 
 
-# sad hack I need to do :(
-normer = np.load("normer4.npy")
-model.normalizer.adapt(normer)
-del normer
+# normer is obtained by sampling the training generator (large batch recommended)
+
+#normer = np.load("normer4.npy")
+
+model.normalizer.adapt(train_generator50.__getitem__(1))
+#del normer
 
 
- def saver(epoch, logs):
-            model.network.save_weights("weights/"+str(epoch)+"diffusion_addons")
-            model.ema_network.save_weights("weights/"+str(epoch)+"diffusion_addons_ema")
+def saver(epoch, logs):
+    model.network.save_weights("weights/"+str(epoch)+"diffusion_addons")
+    model.ema_network.save_weights("weights/"+str(epoch)+"diffusion_addons_ema")
 
 reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='i_loss', factor=0.5,
                               patience=2, min_lr=0)
@@ -105,13 +107,13 @@ reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='i_loss', factor=0.5,
 # run training and plot generated images periodically
 history = model.fit(
     train_generator50,
-    epochs=10,
+    epochs=30,
     steps_per_epoch=14000,
     #validation_data = val_generator,
     batch_size=batch_size,
     callbacks=[
         reduce_lr,
-        keras.callbacks.LambdaCallback(on_epoch_end=model.plotter),
+        #keras.callbacks.LambdaCallback(on_epoch_end=model.plotter),
         keras.callbacks.LambdaCallback(on_epoch_end=saver)
     ],
 )
