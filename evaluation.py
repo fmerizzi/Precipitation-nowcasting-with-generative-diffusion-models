@@ -13,28 +13,7 @@ import imageio
 import models 
 import generators 
 import utils 
-
-#num_epochs = 200  # train for at least 50 epochs for good results
-image_size = 96
-num_frames = 4
-
-# sampling
-
-min_signal_rate = 0.015
-max_signal_rate = 0.95
-
-# architecture
-
-embedding_dims = 64 # 32
-embedding_max_frequency = 1000.0
-#widths = [32, 64, 96, 128]
-widths = [64, 128, 256, 384]
-block_depth = 2
-
-# optimization
-
-batch_size =  2
-ema = 0.999
+from setup import *
 
 addon = np.load("/home/faster/Documents/WF-Unet_comparison/Wf_geopot_landSeaMask.npy")
 tmp = np.zeros((batch_size, 2 , 96 ,96))
@@ -94,8 +73,8 @@ model.normalizer.adapt(train_generator50.__getitem__(1))
 
 
 # Load weights
-#model.network.load_weights("weights/30diffusion_addons_ema")
-#model.ema_network.load_weights("weights/30diffusion_addons_ema")
+model.network.load_weights("weights/3diffusion_addons_ema")
+model.ema_network.load_weights("weights/3diffusion_addons_ema")
 
 
 # Single Diffusion 
@@ -142,7 +121,8 @@ exp,hist,metrics = experiment(full_test_generator50,29)
 plt.plot(hist)
 print(exp)
 
-metrics_aggregator(raw,thresh).mean(axis=0)
+
+utils.metrics_aggregator(metrics,thresh).mean(axis=0)
 
 # Ensamble diffusion
 def experiment2(generator = test_generator50, n_iter=10, ensamble_iter = 15):
@@ -199,6 +179,6 @@ res_ens,raw = experiment2(full_test_generator50,29,15)
 plt.plot(hist)
 print(exp)
 
-metrics_aggregator(raw,thresh).mean(axis=0)
+utils.metrics_aggregator(raw,thresh).mean(axis=0)
 
 
