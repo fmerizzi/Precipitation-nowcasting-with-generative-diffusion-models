@@ -31,7 +31,7 @@ test_wind_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction
 test_wind_dataset = test_wind_dataset[:,:96,:96]
 
 train_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2016-2020.npy',allow_pickle = True)
-test_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2016-2020.npy',allow_pickle = True)
+test_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2021.npy',allow_pickle = True)
 
 # normalization 
 
