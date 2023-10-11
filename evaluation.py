@@ -79,7 +79,7 @@ model.ema_network.load_weights("weights/3diffusion_addons_ema")
 
 # Single Diffusion 
 
-def experiment(generator = test_generator50, n_iter=29):
+def experiment(generator = test_generator50, n_iter=34):
     history = np.zeros((n_iter,3))
     raw_data = np.zeros((n_iter,batch_size,96,96,6))
     
@@ -116,7 +116,7 @@ def experiment(generator = test_generator50, n_iter=29):
     # return average of all mses
     return mses / n_iter, history, raw_data
 
-exp,hist,metrics = experiment(full_test_generator50,29)
+exp,hist,metrics = experiment(full_test_generator50,34)
 
 plt.plot(hist)
 print(exp)
@@ -174,7 +174,7 @@ def experiment2(generator = test_generator50, n_iter=10, ensamble_iter = 15):
     #average mses by number of iterations
     return mses, raw_data
 
-res_ens,raw = experiment2(full_test_generator50,29,15)
+res_ens,raw = experiment2(full_test_generator50,34,15)
 
 plt.plot(hist)
 print(exp)
