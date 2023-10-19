@@ -81,9 +81,8 @@ model.normalizer.variance = variance
 
 
 # Load weights
-model.network.load_weights("weights/3diffusion_addons_ema")
-model.ema_network.load_weights("weights/3diffusion_addons_ema")
-
+model.network.load_weights("weights/diffusion")
+model.ema_network.load_weights("weights/diffusion_ema")
 
 #number of iterations for numerical results  
 #in the case of 1 year and the use of Full Generator 
@@ -135,7 +134,7 @@ exp,hist,metrics = experiment(full_test_generator50,2)
 #plt.plot(hist)
 print(exp)
 
-thresh = 0.01 # tuning needed
+thresh = 0.0001 # tuning needed
 
 metrics = utils.metrics_aggregator(metrics,thresh).mean(axis=0)
 print(metrics)
