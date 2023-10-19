@@ -15,23 +15,29 @@ import generators
 import utils 
 from setup import *
 
-addon = np.load("/home/faster/Documents/WF-Unet_comparison/Wf_geopot_landSeaMask.npy")
+# datasets and weights are available upon resonable request
+
+# load non temporal parameters
+addon = np.load("addons/Wf_geopot_landSeaMask.npy")
 tmp = np.zeros((batch_size, 2 , 96 ,96))
 for i in range(batch_size):
     tmp[i] = np.copy(addon)
 addon = tmp 
 addon = addon.transpose((0,2,3,1))
 
-train_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/training_set2016-2020_105x173.npz')['arr_0']
-test_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/test_set2021_105x173.npz')['arr_0']
+# load rain dataset 
+train_dataset = np.load('data/training_set2016-2020_105x173.npz')['arr_0']
+test_dataset = np.load('data/test_set2021_105x173.npz')['arr_0']
 
-train_wind_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/squared_wind2016-2020_105x173.npz')['arr_0']
+# load wind dataset
+train_wind_dataset = np.load('data/squared_wind2016-2020_105x173.npz')['arr_0']
 train_wind_dataset = train_wind_dataset[:,:96,:96]
-test_wind_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/squared_wind2021_105x173.npz')['arr_0']
+test_wind_dataset = np.load('data/squared_wind2021_105x173.npz')['arr_0']
 test_wind_dataset = test_wind_dataset[:,:96,:96]
 
-train_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2016-2020.npy',allow_pickle = True)
-test_timestamps_dataset = np.load('/home/faster/Documents/Diffusion-weather-prediction/timestamps2021.npy',allow_pickle = True)
+#load timestamp dataset 
+train_timestamps_dataset = np.load('data/timestamps2016-2020.npy',allow_pickle = True)
+test_timestamps_dataset = np.load('data/timestamps2021.npy',allow_pickle = True)
 
 # normalization 
 
@@ -44,12 +50,12 @@ maxWtest = test_wind_dataset.max()
 train_wind_dataset = train_wind_dataset / maxWtrain
 test_wind_dataset = test_wind_dataset / maxWtest
 
-# generator definition 
+# generators  
 
-train_generator50 = generators.DataGenerator(train_dataset,batch_size,0.5,train_timestamps_dataset,train_wind_dataset)
-test_generator50 = generators.DataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
-test_generator20 = generators.DataGenerator(test_dataset,batch_size,0.2,test_timestamps_dataset,test_wind_dataset)
-full_test_generator50 = generators.FullDataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset)
+train_generator50 = generators.DataGenerator(train_dataset,batch_size,0.5,train_timestamps_dataset,train_wind_dataset, addon)
+test_generator50 = generators.DataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset, addon)
+test_generator20 = generators.DataGenerator(test_dataset,batch_size,0.2,test_timestamps_dataset,test_wind_dataset, addon)
+full_test_generator50 = generators.FullDataGenerator(test_dataset,batch_size,0.5,test_timestamps_dataset,test_wind_dataset, addon)
 
 
 # diffusion model 
@@ -67,14 +73,22 @@ model.compile(
 
 
 # pre-calculated normalizer on the whole training set 
-#normer = np.load("normer.npy")
 model.normalizer.adapt(train_generator50.__getitem__(1))
-#del normer
+mean = np.load("addons/mean_normalizer.npz")['arr_0']
+variance = np.load("addons/variance_normalizer.npz")['arr_0']
+model.normalizer.mean = mean 
+model.normalizer.variance = variance
 
 
 # Load weights
 model.network.load_weights("weights/3diffusion_addons_ema")
 model.ema_network.load_weights("weights/3diffusion_addons_ema")
+
+
+#number of iterations for numerical results  
+#in the case of 1 year and the use of Full Generator 
+#set this value to (sequences_in_1_year / batch size)
+ITERATIONS = 5
 
 
 # Single Diffusion 
@@ -116,13 +130,15 @@ def experiment(generator = test_generator50, n_iter=34):
     # return average of all mses
     return mses / n_iter, history, raw_data
 
-exp,hist,metrics = experiment(full_test_generator50,34)
+exp,hist,metrics = experiment(full_test_generator50,2)
 
-plt.plot(hist)
+#plt.plot(hist)
 print(exp)
 
+thresh = 0.01 # tuning needed
 
-utils.metrics_aggregator(metrics,thresh).mean(axis=0)
+metrics = utils.metrics_aggregator(metrics,thresh).mean(axis=0)
+print(metrics)
 
 # Ensamble diffusion
 def experiment2(generator = test_generator50, n_iter=10, ensamble_iter = 15):
@@ -174,11 +190,12 @@ def experiment2(generator = test_generator50, n_iter=10, ensamble_iter = 15):
     #average mses by number of iterations
     return mses, raw_data
 
-res_ens,raw = experiment2(full_test_generator50,34,15)
+res_ens,raw = experiment2(full_test_generator50,2,15)
 
-plt.plot(hist)
+#plt.plot(hist)
 print(exp)
 
-utils.metrics_aggregator(raw,thresh).mean(axis=0)
+metrics = utils.metrics_aggregator(raw,thresh).mean(axis=0)
+print(metrics)
 
 

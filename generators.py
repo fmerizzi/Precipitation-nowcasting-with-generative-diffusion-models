@@ -14,18 +14,12 @@ import models
 import utils 
 
 
-addon = np.load("/home/faster/Documents/WF-Unet_comparison/Wf_geopot_landSeaMask.npy")
-tmp = np.zeros((2, 2 , 96 ,96))
-for i in range(2):
-    tmp[i] = np.copy(addon)
-addon = tmp 
-addon = addon.transpose((0,2,3,1))
-
  
 # generator that randomly samples data  
 class DataGenerator(keras.utils.Sequence):
-    def __init__(self, data, batch_size=24, min_rainfall = 0.0, time =None, wind = None) :
+    def __init__(self, data, batch_size=24, min_rainfall = 0.0, time =None, wind = None, addon = None) :
         self.data = data
+        self.addon = addon
         self.time = time
         self.wind = wind
         self.sequence = 11
@@ -40,7 +34,7 @@ class DataGenerator(keras.utils.Sequence):
     def __getitem__(self, idx):
                         
         result = np.zeros((self.batch_size,96,96,self.sequence + 5))
-        result[:,:,:,:2] = addon
+        result[:,:,:,:2] = self.addon
         
         for i in range(self.batch_size):
             
@@ -65,8 +59,9 @@ class DataGenerator(keras.utils.Sequence):
     
 #generator that returns all the sequences of data, from start to finish 
 class FullDataGenerator(keras.utils.Sequence):
-    def __init__(self, data, batch_size=24, min_rainfall = 0.0,time = None, wind = None):
+    def __init__(self, data, batch_size=24, min_rainfall = 0.0,time = None, wind = None, addon = None):
         self.data = data
+        self.addon = addon
         self.wind = wind
         self.time = time
         self.counter = 0 
@@ -82,7 +77,7 @@ class FullDataGenerator(keras.utils.Sequence):
     def __getitem__(self, idx):
                         
         result = np.zeros((self.batch_size,96,96,self.sequence + 5))
-        result[:,:,:,:2] = addon
+        result[:,:,:,:2] = self.addon
         
         for i in range(self.batch_size):
             
